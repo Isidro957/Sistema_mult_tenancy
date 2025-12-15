@@ -4,27 +4,26 @@ namespace App\Http\Middleware;
 
 use Closure;
 use App\Models\Tenant;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class ResolveTenant
 {
     public function handle(Request $request, Closure $next)
     {
-        $host = $request->getHost();
+        $host  = $request->getHost();
         $parts = explode('.', $host);
 
         /**
          * ===============================
          * AMBIENTE LOCAL (localhost)
          * ===============================
-         * Ex: http://localhost:8000
          */
         if (in_array($host, ['localhost', '127.0.0.1'])) {
 
             $tenant = Tenant::first();
 
-            if (!$tenant) {
+            if (! $tenant) {
                 abort(500, 'Nenhum tenant cadastrado para ambiente local.');
             }
 
@@ -35,7 +34,7 @@ class ResolveTenant
 
         /**
          * ===============================
-         * PRODUÇÃO / SUBDOMÍNIO REAL
+         * PRODUÇÃO / SUBDOMÍNIO
          * Ex: empresa1.dominio.com
          * ===============================
          */
@@ -51,7 +50,7 @@ class ResolveTenant
 
         $tenant = Tenant::where('subdomain', $subdomain)->first();
 
-        if (!$tenant) {
+        if (! $tenant) {
             abort(404, "Tenant '{$subdomain}' não existe.");
         }
 

@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Hash;
 use App\Models\Tenant;
 
-class TenantSeeder1 extends Seeder
+class BICSeeder extends Seeder
 {
     public function run()
     {
@@ -50,7 +50,7 @@ class TenantSeeder1 extends Seeder
             [
                 'id' => Str::uuid(),
                 'name' => 'Admin',
-                'email' => 'admin@tenant1.com',
+                'email' => 'admin@bic.com',
                 'password' => Hash::make('123456'),
                 'role' => 'admin',
                 'created_at' => now(),
@@ -59,7 +59,7 @@ class TenantSeeder1 extends Seeder
             [
                 'id' => Str::uuid(),
                 'name' => 'Cliente',
-                'email' => 'cliente@tenant1.com',
+                'email' => 'cliente@bic.com',
                 'password' => Hash::make('123456'),
                 'role' => 'cliente',
                 'created_at' => now(),

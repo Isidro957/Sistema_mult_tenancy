@@ -19,7 +19,7 @@ return Application::configure(basePath: dirname(__DIR__))
 
         // 🔹 Alias de middleware (CORRETO)
         $middleware->alias([
-            'auth.tenant' => \App\Http\Middleware\AuthTenant::class,
+            $middleware->append(\App\Http\Middleware\ResolveTenant::class)
         ]);
     })
 

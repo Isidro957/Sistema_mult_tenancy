@@ -46,7 +46,7 @@ Route::prefix('tenant')
         Route::post('/register', [TenantAuthController::class, 'register']);
 
         Route::post('/logout', [TenantAuthController::class, 'logout'])
-            ->middleware('auth:tenant') // CORRETO: usar auth:tenant
+            ->middleware('auth:tenant') // agora usando o guard padrão
             ->name('tenant.logout');
 
         /*
@@ -66,7 +66,6 @@ Route::prefix('tenant')
             Route::prefix('users')
                 ->name('tenant.users.')
                 ->group(function () {
-
                     Route::get('/', [TenantUserController::class, 'index'])->name('index');
                     Route::get('/create', [TenantUserController::class, 'create'])->name('create');
                     Route::post('/', [TenantUserController::class, 'store'])->name('store');

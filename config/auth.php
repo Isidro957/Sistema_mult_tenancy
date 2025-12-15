@@ -17,34 +17,36 @@ return [
     | Authentication Guards
     |--------------------------------------------------------------------------
     */
-    'guards' => [
-        'web' => [
-            'driver' => 'session',
-            'provider' => 'users', // landlord users
-        ],
-
-        'tenant' => [
-            'driver' => 'session',
-            'provider' => 'tenant_users', // tenant users
-        ],
+'guards' => [
+    'web' => [
+        'driver' => 'session',
+        'provider' => 'users', // landlord
     ],
+
+    'tenant' => [
+        'driver' => 'session',
+        'provider' => 'tenant_users', // tenant users
+    ],
+],
+
 
     /*
     |--------------------------------------------------------------------------
     | User Providers
     |--------------------------------------------------------------------------
     */
-    'providers' => [
-        'users' => [
-            'driver' => 'eloquent',
-            'model' => App\Models\User::class, // landlord user
-        ],
-
-        'tenant_users' => [
-            'driver' => 'eloquent',
-            'model' => App\Models\TenantUser::class, // tenant user
-        ],
+'providers' => [
+    'users' => [
+        'driver' => 'eloquent',
+        'model' => App\Models\User::class,
     ],
+
+    'tenant_users' => [
+        'driver' => 'eloquent',
+        'model' => App\Models\TenantUser::class,
+    ],
+],
+
 
     /*
     |--------------------------------------------------------------------------
