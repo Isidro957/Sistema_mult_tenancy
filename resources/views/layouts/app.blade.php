@@ -37,22 +37,7 @@
 </head>
 <body>
 <div class="d-flex">
-    <!-- Sidebar -->
-    <div class="sidebar p-3">
-        <h4 class="text-center">FaturaJa</h4>
-        <hr>
-        <p><strong>Tenant:</strong> {{ app('tenant')->name }}</p>
-        <ul class="nav flex-column">
-            <li class="nav-item mb-2"><a href="{{ route('tenant.dashboard') }}" class="nav-link">Dashboard</a></li>
-            <li class="nav-item mb-2"><a href="{{ route('tenant.users.index') }}" class="nav-link">Usuários</a></li>
-            <li class="nav-item mb-2"><a href="#" class="nav-link">Configurações</a></li>
-            <li class="nav-item mt-4"><a href="{{ route('tenant.logout') }}" class="nav-link text-danger" 
-                onclick="event.preventDefault(); document.getElementById('logout-form').submit();">Logout</a></li>
-        </ul>
-        <form id="logout-form" action="{{ route('tenant.logout') }}" method="POST" class="d-none">
-            @csrf
-        </form>
-    </div>
+    
 
     <!-- Main content -->
     <div class="content w-100">

@@ -5,47 +5,59 @@ namespace App\Http\Middleware;
 use Closure;
 use App\Models\Tenant;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Facades\DB;
 
 class ResolveTenant
 {
     public function handle(Request $request, Closure $next)
     {
-        $host  = $request->getHost();
-        $parts = explode('.', $host);
+        $host = $request->getHost();
 
-        /**
-         * ===============================
-         * AMBIENTE LOCAL (localhost)
-         * ===============================
-         */
-        if (in_array($host, ['localhost', '127.0.0.1'])) {
+        /*
+        |--------------------------------------------------------------------------
+        | NÃO resolver tenant no login/register global
+        |--------------------------------------------------------------------------
+        */
+        if ($request->is('login') || $request->is('register')) {
+            return $next($request);
+        }
 
-            $tenant = Tenant::first();
+        /*
+        |--------------------------------------------------------------------------
+        | AMBIENTE LOCAL (bai.localhost)
+        |--------------------------------------------------------------------------
+        */
+        if (str_ends_with($host, '.faturaja.sdoca') ){
+
+            $subdomain = explode('.', $host)[0];
+
+            $tenant = Tenant::where('subdomain', $subdomain)->first();
 
             if (! $tenant) {
-                abort(500, 'Nenhum tenant cadastrado para ambiente local.');
+                abort(404, "Tenant '{$subdomain}' não existe.");
             }
 
-            $this->setTenantDatabase($tenant);
+            $this->bootstrapTenant($tenant);
 
             return $next($request);
         }
 
-        /**
-         * ===============================
-         * PRODUÇÃO / SUBDOMÍNIO
-         * Ex: empresa1.dominio.com
-         * ===============================
-         */
+        /*
+        |--------------------------------------------------------------------------
+        | PRODUÇÃO (empresa.dominio.com)
+        |--------------------------------------------------------------------------
+        */
+        $parts = explode('.', $host);
+
         if (count($parts) < 3) {
-            abort(404, 'Subdomínio do tenant não encontrado.');
+            abort(404, 'Subdomínio não encontrado.');
         }
 
         $subdomain = $parts[0];
 
         if ($subdomain === 'www') {
-            abort(404, 'Subdomínio inválido.');
+            abort(404);
         }
 
         $tenant = Tenant::where('subdomain', $subdomain)->first();
@@ -54,18 +66,19 @@ class ResolveTenant
             abort(404, "Tenant '{$subdomain}' não existe.");
         }
 
-        $this->setTenantDatabase($tenant);
+        $this->bootstrapTenant($tenant);
 
         return $next($request);
     }
 
-    /**
-     * ===============================
-     * CONFIGURA O BANCO DO TENANT
-     * ===============================
-     */
-    private function setTenantDatabase(Tenant $tenant): void
+    /*
+    |--------------------------------------------------------------------------
+    | BOOTSTRAP DO TENANT
+    |--------------------------------------------------------------------------
+    */
+    private function bootstrapTenant(Tenant $tenant): void
     {
+        // Base de dados do tenant
         config([
             'database.connections.tenant.database' => $tenant->database_name,
         ]);
@@ -75,5 +88,10 @@ class ResolveTenant
 
         // Disponível globalmente
         app()->instance('tenant', $tenant);
+
+        // Parâmetro automático nas rotas
+        URL::defaults([
+            'tenant' => $tenant->subdomain,
+        ]);
     }
 }

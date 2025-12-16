@@ -14,7 +14,6 @@ class TenantUserController extends Controller
      */
     public function index()
     {
-        // Busca todos os usuários do tenant
         $users = TenantUser::all();
         return view('tenant.users.index', compact('users'));
     }
@@ -32,21 +31,17 @@ class TenantUserController extends Controller
      */
     public function store(Request $request)
     {
-        // Validação usando conexão tenant
         $request->validate([
             'name' => 'required|string|max:255',
             'email' => [
                 'required',
                 'email',
-                Rule::unique('users')->using(function ($query) {
-                    return $query->connection('tenant');
-                }),
+                Rule::unique(TenantUser::class, 'email'),
             ],
             'password' => 'required|min:6|confirmed',
             'role' => 'required|string|in:admin,user',
         ]);
 
-        // Criação do usuário no banco tenant
         TenantUser::create([
             'name' => $request->name,
             'email' => $request->email,
@@ -76,23 +71,18 @@ class TenantUserController extends Controller
             'email' => [
                 'required',
                 'email',
-                Rule::unique('users')->ignore($user->id)->using(function ($query) {
-                    return $query->connection('tenant');
-                }),
+                Rule::unique(TenantUser::class, 'email')->ignore($user->id),
             ],
             'password' => 'nullable|min:6|confirmed',
             'role' => 'required|string|in:admin,user',
         ]);
 
-        $user->name = $request->name;
-        $user->email = $request->email;
-        $user->role = $request->role;
-
-        if ($request->filled('password')) {
-            $user->password = Hash::make($request->password);
-        }
-
-        $user->save();
+        $user->update([
+            'name' => $request->name,
+            'email' => $request->email,
+            'role' => $request->role,
+            'password' => $request->filled('password') ? Hash::make($request->password) : $user->password,
+        ]);
 
         return redirect()->route('tenant.users.index')
             ->with('success', 'Usuário atualizado com sucesso!');

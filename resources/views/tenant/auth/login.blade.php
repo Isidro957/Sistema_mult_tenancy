@@ -12,7 +12,7 @@
                 <div class="alert alert-danger">{{ session('error') }}</div>
             @endif
 
-            <form action="{{ url('tenant/login') }}" method="POST">
+            <form action="{{ url('login') }}" method="POST">
                 @csrf
                 <div class="mb-3">
                     <label for="email" class="form-label">E-mail</label>
@@ -28,7 +28,7 @@
             </form>
 
             <div class="mt-3 text-center">
-                <a href="{{ route('tenant.register') }}">Não tem conta? Cadastre-se</a>
+                <a href="{{ route('register') }}">Não tem conta? Cadastre-se</a>
             </div>
         </div>
     </div>

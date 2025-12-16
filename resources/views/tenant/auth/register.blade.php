@@ -18,7 +18,7 @@
                 </div>
             @endif
 
-            <form action="{{ url('tenant/register') }}" method="POST">
+            <form action="{{ url('register') }}" method="POST">
                 @csrf
                 <div class="mb-3">
                     <label for="name" class="form-label">Nome</label>
@@ -44,7 +44,7 @@
             </form>
 
             <div class="mt-3 text-center">
-                <a href="{{ route('tenant.login') }}">Já tem conta? Faça login</a>
+                <a href="{{ route('login') }}">Já tem conta? Faça login</a>
             </div>
         </div>
     </div>
