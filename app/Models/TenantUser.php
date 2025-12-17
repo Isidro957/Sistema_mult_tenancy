@@ -3,35 +3,40 @@
 namespace App\Models;
 
 use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 use Illuminate\Support\Str;
+use Illuminate\Contracts\Auth\MustVerifyEmail; 
+use Illuminate\Auth\MustVerifyEmail as MustVerifyEmailTrait; 
 
-class TenantUser extends Authenticatable
+class TenantUser extends Authenticatable implements MustVerifyEmail
 {
-    use HasApiTokens;
+    use HasApiTokens, Notifiable, MustVerifyEmailTrait;
 
-    // Conexão específica do tenant
     protected $connection = 'tenant';
+    protected $table = 'users';
 
-    // Campos preenchíveis
-    protected $fillable = ['id', 'name', 'email', 'password', 'role'];
-
-    // Campos ocultos em JSON
-    protected $hidden = ['password', 'remember_token'];
-
-    // UUID como chave primária
     public $incrementing = false;
     protected $keyType = 'string';
 
-    // Nome da tabela
-    protected $table = 'users';
+    protected $fillable = [
+        'name',
+        'email',
+        'password',
+        'role',
+        'tenant_id',
+        'email_verified_at',
+    ];
 
-    // Casts opcionais
+    protected $hidden = [
+        'password',
+        'remember_token',
+    ];
+
     protected $casts = [
         'email_verified_at' => 'datetime',
     ];
 
-    // Gerar UUID automaticamente
     protected static function boot(): void
     {
         parent::boot();

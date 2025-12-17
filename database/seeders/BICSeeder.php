@@ -49,19 +49,21 @@ class BICSeeder extends Seeder
         DB::connection('tenant')->table('users')->insert([
             [
                 'id' => Str::uuid(),
-                'name' => 'Admin',
-                'email' => 'admin@bic.com',
+                'name' => 'Stelvio Marques',
+                'email' => 'stelviomarques157@gmail.com',
                 'password' => Hash::make('123456'),
                 'role' => 'admin',
+                'tenant_id' => $tenant->id,
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
             [
                 'id' => Str::uuid(),
-                'name' => 'Cliente',
-                'email' => 'cliente@bic.com',
+                'name' => 'Alice Rocha',
+                'email' => 'alicepaula507@gmail.com',
                 'password' => Hash::make('123456'),
                 'role' => 'cliente',
+                'tenant_id' => $tenant->id,
                 'created_at' => now(),
                 'updated_at' => now(),
             ]

@@ -3,8 +3,15 @@
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use App\Http\Middleware\ResolveTenant;
+use App\Http\Middleware\EnsureTenantUser;
+use Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful;
 
 return Application::configure(basePath: dirname(__DIR__))
+
+    // -----------------------------
+    // Rotas Web / API / Console
+    // -----------------------------
     ->withRouting(
         web: __DIR__.'/../routes/web.php',
         api: __DIR__.'/../routes/api.php',
@@ -12,17 +19,24 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
 
+    // -----------------------------
+    // Middlewares
+    // -----------------------------
     ->withMiddleware(function (Middleware $middleware) {
 
-        // 🔹 Middleware global (OK)
-        $middleware->append(\App\Http\Middleware\ResolveTenant::class);
+        // 🔹 Middleware GLOBAL → resolve o tenant antes de tudo
+        $middleware->append(ResolveTenant::class);
 
-        // 🔹 Alias de middleware (CORRETO)
+        // 🔹 Middleware de ROTA (alias)
         $middleware->alias([
-            $middleware->append(\App\Http\Middleware\ResolveTenant::class)
+            'tenant.user'   => EnsureTenantUser::class,                 // Verifica se user pertence ao tenant
+            'auth:sanctum'  => EnsureFrontendRequestsAreStateful::class // Protege API com token
         ]);
     })
 
+    // -----------------------------
+    // Tratamento de Exceções
+    // -----------------------------
     ->withExceptions(function (Exceptions $exceptions) {
         //
     })

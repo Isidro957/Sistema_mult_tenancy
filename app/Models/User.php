@@ -17,6 +17,9 @@ class User extends TenantUser
         'name',
         'email',
         'password',
+        'role',
+        'tenant_id',
+        'email_verified_at',
     ];
 
     /**

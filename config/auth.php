@@ -27,6 +27,13 @@ return [
         'driver' => 'session',
         'provider' => 'tenant_users', // tenant users
     ],
+
+
+    'sanctum' => [
+        'driver' => 'sanctum',
+        'provider' => 'tenant_users',
+    ],
+
 ],
 
 

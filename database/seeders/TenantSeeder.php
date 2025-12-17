@@ -49,19 +49,21 @@ class TenantSeeder extends Seeder
         DB::connection('tenant')->table('users')->insert([
             [
                 'id' => Str::uuid(),
-                'name' => 'Admin',
-                'email' => 'admin@tenant.com',
+                'name' => 'Vanio',
+                'email' => 'vanioneto709@gmail.com',
                 'password' => Hash::make('123456'),
                 'role' => 'admin',
+                'tenant_id' => $tenant->id,
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
             [
                 'id' => Str::uuid(),
-                'name' => 'Cliente',
-                'email' => 'cliente@tenant.com',
+                'name' => 'Paulina Capitao',
+                'email' => 'capitaopaulinafernando@gmail.com',
                 'password' => Hash::make('123456'),
                 'role' => 'cliente',
+                'tenant_id' => $tenant->id,
                 'created_at' => now(),
                 'updated_at' => now(),
             ]

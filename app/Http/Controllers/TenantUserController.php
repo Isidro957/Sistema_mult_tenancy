@@ -6,20 +6,24 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
 use App\Models\TenantUser;
+use Illuminate\Auth\Events\Registered;
 
 class TenantUserController extends Controller
 {
     /**
-     * Listar todos os usuários do tenant
+     * Listar usuários do tenant atual
      */
     public function index()
     {
-        $users = TenantUser::all();
+        $tenant = app('tenant');
+
+        $users = TenantUser::where('tenant_id', $tenant->id)->get();
+
         return view('tenant.users.index', compact('users'));
     }
 
     /**
-     * Formulário para criar novo usuário
+     * Formulário de criação
      */
     public function create()
     {
@@ -29,52 +33,76 @@ class TenantUserController extends Controller
     /**
      * Salvar novo usuário
      */
-    public function store(Request $request)
-    {
-        $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => [
-                'required',
-                'email',
-                Rule::unique(TenantUser::class, 'email'),
-            ],
-            'password' => 'required|min:6|confirmed',
-            'role' => 'required|string|in:admin,user',
-        ]);
+   public function store(Request $request)
+{
+    $tenant = app('tenant');
 
-        TenantUser::create([
-            'name' => $request->name,
-            'email' => $request->email,
-            'password' => Hash::make($request->password),
-            'role' => $request->role,
-        ]);
+    $request->validate([
+        'name' => 'required|string|max:255',
+        'email' => [
+            'required',
+            'email',
+            Rule::unique(TenantUser::class, 'email')
+                ->where(fn ($q) => $q->where('tenant_id', $tenant->id)),
+        ],
+        'password' => 'required|min:6|confirmed',
+        'role' => 'required|in:admin,cliente',
+    ]);
 
-        return redirect()->route('tenant.users.index')
-            ->with('success', 'Usuário criado com sucesso!');
-    }
+    $user = TenantUser::create([
+        'name' => $request->name,
+        'email' => $request->email,
+        'password' => Hash::make($request->password),
+        'role' => $request->role,
+        'tenant_id' => $tenant->id,
+        'email_verified_at' => null,
+    ]);
+
+    // Enviar notificação de verificação
+    $user->sendEmailVerificationNotification();
+    event(new Registered($user));
+
+    return redirect()
+        ->route('tenant.users.index')
+        ->with('success', 'Usuário criado com sucesso! Um link de verificação foi enviado ao email.');
+}
 
     /**
-     * Formulário para editar usuário
+     * Formulário de edição
      */
-    public function edit(TenantUser $user)
+    public function edit(string $id)
     {
+        $tenant = app('tenant');
+
+        $user = TenantUser::where('id', $id)
+            ->where('tenant_id', $tenant->id)
+            ->firstOrFail();
+
         return view('tenant.users.edit', compact('user'));
     }
 
     /**
      * Atualizar usuário
      */
-    public function update(Request $request, TenantUser $user)
+    public function update(Request $request, string $id)
     {
+        $tenant = app('tenant');
+
+        $user = TenantUser::where('id', $id)
+            ->where('tenant_id', $tenant->id)
+            ->firstOrFail();
+
         $request->validate([
             'name' => 'required|string|max:255',
             'email' => [
                 'required',
                 'email',
-                Rule::unique(TenantUser::class, 'email')->ignore($user->id),
+                Rule::unique(TenantUser::class, 'email')
+                    ->where(fn ($q) => $q->where('tenant_id', $tenant->id))
+                    ->ignore($user->id),
             ],
             'password' => 'nullable|min:6|confirmed',
-            'role' => 'required|string|in:admin,user',
+            'role' => 'required|in:admin,cliente',
         ]);
 
         $user->update([
@@ -84,18 +112,26 @@ class TenantUserController extends Controller
             'password' => $request->filled('password') ? Hash::make($request->password) : $user->password,
         ]);
 
-        return redirect()->route('tenant.users.index')
+        return redirect()
+            ->route('tenant.users.index')
             ->with('success', 'Usuário atualizado com sucesso!');
     }
 
     /**
      * Excluir usuário
      */
-    public function destroy(TenantUser $user)
+    public function destroy(string $id)
     {
+        $tenant = app('tenant');
+
+        $user = TenantUser::where('id', $id)
+            ->where('tenant_id', $tenant->id)
+            ->firstOrFail();
+
         $user->delete();
 
-        return redirect()->route('tenant.users.index')
+        return redirect()
+            ->route('tenant.users.index')
             ->with('success', 'Usuário excluído com sucesso!');
     }
 }

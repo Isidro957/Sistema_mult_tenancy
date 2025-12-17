@@ -1,39 +1,35 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\TenantUserController;
-use App\Http\Controllers\ApiAuthController;
+
 use App\Http\Middleware\ResolveTenant;
-
-/*
-|--------------------------------------------------------------------------
-| API Routes - MULTI TENANT
-|--------------------------------------------------------------------------
-| Autenticação via Sanctum (Bearer Token)
-|--------------------------------------------------------------------------
-*/
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Route;
 
 /**
- * ===============================
- * LOGIN / REGISTER (GLOBAL)
- * ===============================
+ * LOGIN GLOBAL
  */
-Route::post('/login', [ApiAuthController::class, 'login']);
-Route::post('/register', [ApiAuthController::class, 'register']);
+Route::post('/login', [\App\Http\Controllers\ApiAuthController::class, 'login']);
 
 /**
- * ===============================
- * ROTAS PROTEGIDAS DO TENANT
- * ===============================
+ * ROTAS DO TENANT (multi-tenant)
  */
-Route::middleware([ResolveTenant::class, 'auth:sanctum'])->group(function () {
+Route::middleware([ResolveTenant::class])->group(function () {
 
-    Route::get('/tenant-info', function () {
-        return response()->json([
-            'tenant' => app('tenant'),
-            'user'   => auth('sactum')->user(),
-        ]);
+    // Registro opcional
+    Route::post('/register', [\App\Http\Controllers\ApiAuthController::class, 'register']);
+
+    // Rotas protegidas
+    Route::middleware(['auth:sanctum', 'tenant.user'])->group(function () {
+
+        Route::get('/tenant-info', function (Request $request) {
+            return response()->json([
+                'tenant' => app('tenant'),
+                'user'   => $request->user(),
+            ]);
+        });
+
+        Route::post('/logout', [\App\Http\Controllers\ApiAuthController::class, 'logout']);
+
+        Route::apiResource('/users', \App\Http\Controllers\TenantUserController::class);
     });
-
-    Route::apiResource('users', TenantUserController::class);
 });

@@ -4,64 +4,95 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use App\Models\Tenant;
 use App\Models\TenantUser;
 
 class ApiAuthController extends Controller
 {
     /**
-     * Registrar usuário no tenant atual
-     */
-    public function register(Request $request)
-    {
-        $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|email|unique:tenant_users,email',
-            'password' => 'required|string|min:6|confirmed',
-        ]);
-
-        $user = TenantUser::create([
-            'name' => $request->name,
-            'email' => $request->email,
-            'password' => Hash::make($request->password),
-            'tenant_id' => app('tenant')->id, // garante que o usuário pertence ao tenant atual
-        ]);
-
-        return response()->json([
-            'message' => 'Usuário criado com sucesso',
-            'user' => $user,
-        ], 201);
-    }
-
-    /**
-     * Login API - retorna token
+     * LOGIN GLOBAL (descobre tenant pelo email)
      */
     public function login(Request $request)
     {
         $request->validate([
-            'email' => 'required|email',
+            'email'    => 'required|email',
             'password' => 'required|string',
         ]);
 
-        $user = TenantUser::where('email', $request->email)
-            ->where('tenant_id', app('tenant')->id) // garante que o usuário pertence ao tenant
-            ->first();
+        /**
+         * Descobrir tenant pelo email
+         */
+        $tenant = Tenant::all()->first(function ($tenant) use ($request) {
 
-        if (!$user || !Hash::check($request->password, $user->password)) {
-            return response()->json(['message' => 'Credenciais inválidas'], 401);
+            config([
+                'database.connections.tenant.database' => $tenant->database_name,
+            ]);
+
+            DB::purge('tenant');
+            DB::reconnect('tenant');
+
+            return DB::connection('tenant')
+                ->table('users')
+                ->where('email', $request->email)
+                ->exists();
+        });
+
+        if (! $tenant) {
+            return response()->json([
+                'message' => 'Usuário não pertence a nenhuma empresa'
+            ], 404);
         }
 
-        // Cria token Sanctum
+        /**
+         * Buscar usuário no tenant correto
+         */
+        $user = TenantUser::where('email', $request->email)->first();
+
+        if (! $user || ! Hash::check($request->password, $user->password)) {
+            return response()->json([
+                'message' => 'Credenciais inválidas'
+            ], 401);
+        }
+
+        /**
+         * Criar token
+         */
         $token = $user->createToken('api-token')->plainTextToken;
 
         return response()->json([
-            'message' => 'Login realizado com sucesso',
-            'token' => $token,
+            'token'        => $token,
+            'tenant'       => $tenant->subdomain,
+            'user'         => $user,
+            'redirect_api' => "https://{$tenant->subdomain}.faturaja.sdoca/api"
         ]);
     }
 
     /**
-     * Logout API - revoga token
+     * REGISTRO (tenant já resolvido)
+     */
+    public function register(Request $request)
+    {
+        $request->validate([
+            'name'     => 'required|string|max:255',
+            'email'    => 'required|email',
+            'password' => 'required|min:6|confirmed',
+        ]);
+
+        $user = TenantUser::create([
+            'name'     => $request->name,
+            'email'    => $request->email,
+            'password' => Hash::make($request->password),
+        ]);
+
+        return response()->json([
+            'message' => 'Usuário criado com sucesso',
+            'user'    => $user,
+        ], 201);
+    }
+
+    /**
+     * LOGOUT
      */
     public function logout(Request $request)
     {
