@@ -10,128 +10,84 @@ use Illuminate\Auth\Events\Registered;
 
 class TenantUserController extends Controller
 {
-    /**
-     * Listar usuários do tenant atual
-     */
     public function index()
     {
-        $tenant = app('tenant');
-
-        $users = TenantUser::where('tenant_id', $tenant->id)->get();
-
+        $tenantId = app('tenant')->id;
+        $users = TenantUser::where('tenant_id', $tenantId)->get();
         return view('tenant.users.index', compact('users'));
     }
 
-    /**
-     * Formulário de criação
-     */
     public function create()
     {
         return view('tenant.users.create');
     }
 
-    /**
-     * Salvar novo usuário
-     */
-   public function store(Request $request)
-{
-    $tenant = app('tenant');
-
-    $request->validate([
-        'name' => 'required|string|max:255',
-        'email' => [
-            'required',
-            'email',
-            Rule::unique(TenantUser::class, 'email')
-                ->where(fn ($q) => $q->where('tenant_id', $tenant->id)),
-        ],
-        'password' => 'required|min:6|confirmed',
-        'role' => 'required|in:admin,cliente',
-    ]);
-
-    $user = TenantUser::create([
-        'name' => $request->name,
-        'email' => $request->email,
-        'password' => Hash::make($request->password),
-        'role' => $request->role,
-        'tenant_id' => $tenant->id,
-        'email_verified_at' => null,
-    ]);
-
-    // Enviar notificação de verificação
-    $user->sendEmailVerificationNotification();
-    event(new Registered($user));
-
-    return redirect()
-        ->route('tenant.users.index')
-        ->with('success', 'Usuário criado com sucesso! Um link de verificação foi enviado ao email.');
-}
-
-    /**
-     * Formulário de edição
-     */
-    public function edit(string $id)
+    public function store(Request $request)
     {
-        $tenant = app('tenant');
-
-        $user = TenantUser::where('id', $id)
-            ->where('tenant_id', $tenant->id)
-            ->firstOrFail();
-
-        return view('tenant.users.edit', compact('user'));
-    }
-
-    /**
-     * Atualizar usuário
-     */
-    public function update(Request $request, string $id)
-    {
-        $tenant = app('tenant');
-
-        $user = TenantUser::where('id', $id)
-            ->where('tenant_id', $tenant->id)
-            ->firstOrFail();
+        $tenantId = app('tenant')->id;
 
         $request->validate([
             'name' => 'required|string|max:255',
             'email' => [
                 'required',
                 'email',
-                Rule::unique(TenantUser::class, 'email')
-                    ->where(fn ($q) => $q->where('tenant_id', $tenant->id))
-                    ->ignore($user->id),
+                Rule::unique(TenantUser::class, 'email')->where(fn($q) => $q->where('tenant_id', $tenantId)),
             ],
-            'password' => 'nullable|min:6|confirmed',
+            'password' => 'required|min:6|confirmed',
             'role' => 'required|in:admin,cliente',
         ]);
 
-        $user->update([
+        $user = TenantUser::create([
             'name' => $request->name,
             'email' => $request->email,
+            'password' => Hash::make($request->password),
             'role' => $request->role,
-            'password' => $request->filled('password') ? Hash::make($request->password) : $user->password,
+            'tenant_id' => $tenantId,
         ]);
 
-        return redirect()
-            ->route('tenant.users.index')
-            ->with('success', 'Usuário atualizado com sucesso!');
+        $user->sendEmailVerificationNotification();
+        event(new Registered($user));
+
+        return redirect()->route('tenant.users.index')->with('success', 'Usuário criado com sucesso!');
     }
 
-    /**
-     * Excluir usuário
-     */
-    public function destroy(string $id)
+    public function edit($user)
     {
-        $tenant = app('tenant');
+        $tenantId = app('tenant')->id;
+        $user = TenantUser::where('tenant_id', $tenantId)->where('id', $user)->firstOrFail();
+        return view('tenant.users.edit', compact('user'));
+    }
 
-        $user = TenantUser::where('id', $id)
-            ->where('tenant_id', $tenant->id)
-            ->firstOrFail();
+    public function update(Request $request, $user)
+    {
+        $tenantId = app('tenant')->id;
+        $user = TenantUser::where('tenant_id', $tenantId)->where('id', $user)->firstOrFail();
+
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => [
+                'required',
+                'email',
+                Rule::unique(TenantUser::class, 'email')->ignore($user->id)->where(fn($q) => $q->where('tenant_id', $tenantId)),
+            ],
+            'role' => 'required|in:admin,cliente',
+        ]);
+
+        $user->update($request->only('name','email','role'));
+
+        return redirect()->route('tenant.users.index')->with('success', 'Usuário atualizado!');
+    }
+
+    public function destroy($user)
+    {
+        $tenantId = app('tenant')->id;
+        $user = TenantUser::where('tenant_id', $tenantId)->where('id', $user)->firstOrFail();
+
+        if(auth()->guard('tenant')->id() === $user->id){
+            return redirect()->back()->with('error', 'Você não pode deletar sua própria conta!');
+        }
 
         $user->delete();
-
-        return redirect()
-            ->route('tenant.users.index')
-            ->with('success', 'Usuário excluído com sucesso!');
+        return redirect()->route('tenant.users.index')->with('success', 'Usuário deletado!');
     }
 }

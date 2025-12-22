@@ -10,7 +10,7 @@
 <div class="container mt-5">
     <h2>Editar Usuário</h2>
 
-    <form action="{{ route('tenant.users.update', $user->id) }}" method="POST">
+    <form action="{{ route('tenant.users.update', $user) }}" method="POST">
         @csrf
         @method('PUT')
 
@@ -33,7 +33,6 @@
             <label for="role" class="form-label">Função</label>
             <select name="role" class="form-select" required>
                 <option value="admin" {{ $user->role === 'admin' ? 'selected' : '' }}>Admin</option>
-                <option value="cliente" {{ $user->role === 'cliente' ? 'selected' : '' }}>Cliente</option>
             </select>
         </div>
 

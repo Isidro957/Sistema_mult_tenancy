@@ -14,7 +14,11 @@ class Tenant extends Model
         'name', 
         'subdomain', 
         'database_name', 
-        'data'
+        'data',
+        'endereco',
+        'telefone',
+        'nif',
+        
     ];
 
     protected static function boot(): void

@@ -23,6 +23,9 @@ class TenantSeeder extends Seeder
             'id' => Str::uuid(),
             'name' => 'BAI',
             'subdomain' => 'bai',
+            'endereco' => 'Avenida de Angola, Luanda',
+            'telefone' => '+244923456789',
+            'nif' => '987654325',
             'database_name' => $databaseName,
         ]);
 

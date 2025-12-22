@@ -27,8 +27,8 @@
                 <td>{{ $user->email }}</td>
                 <td>{{ $user->role }}</td>
                 <td>
-                    <a href="{{ route('tenant.users.edit', $user->id) }}" class="btn btn-warning btn-sm">Editar</a>
-                    <form action="{{ route('tenant.users.destroy', $user->id) }}" method="POST" style="display:inline;">
+                    <a href="{{ route('tenant.users.edit', $user) }}" class="btn btn-warning btn-sm">Editar</a>
+                    <form action="{{ route('tenant.users.destroy', $user) }}" method="POST" style="display:inline;">
                         @csrf
                         @method('DELETE')
                         <button type="submit" class="btn btn-danger btn-sm">Apagar</button>

@@ -93,5 +93,6 @@ class ResolveTenant
         URL::defaults([
             'tenant' => $tenant->subdomain,
         ]);
+        
     }
 }

@@ -15,6 +15,9 @@ class CreateTenantsTable extends Migration
             $table->string('name');
             $table->string('subdomain')->unique();
             $table->string('database_name')->unique();
+            $table->text('endereco');
+            $table->string('telefone', 20);
+            $table->string('nif', 50);        
             $table->timestamps();
             $table->json('data')->nullable();
         });

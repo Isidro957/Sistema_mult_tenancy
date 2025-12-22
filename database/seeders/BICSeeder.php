@@ -23,6 +23,9 @@ class BICSeeder extends Seeder
             'id' => Str::uuid(),
             'name' => 'BIC',
             'subdomain' => 'bic',
+            'nif' => '123456789',
+            'endereco' => 'Rua Kinaxixi, 449, Luanda',
+            'telefone' => '+351912345678',
             'database_name' => $databaseName,
         ]);
 
