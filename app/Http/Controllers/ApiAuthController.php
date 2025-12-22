@@ -11,7 +11,8 @@ use App\Models\TenantUser;
 class ApiAuthController extends Controller
 {
     /**
-     * LOGIN GLOBAL (descobre tenant pelo email)
+     * LOGIN GLOBAL
+     * Descobre o tenant pelo email
      */
     public function login(Request $request)
     {
@@ -21,7 +22,7 @@ class ApiAuthController extends Controller
         ]);
 
         /**
-         * Descobrir tenant pelo email
+         * Descobrir o tenant correto
          */
         $tenant = Tenant::all()->first(function ($tenant) use ($request) {
 
@@ -45,7 +46,17 @@ class ApiAuthController extends Controller
         }
 
         /**
-         * Buscar usuário no tenant correto
+         * Garantir conexão correta do tenant
+         */
+        config([
+            'database.connections.tenant.database' => $tenant->database_name,
+        ]);
+
+        DB::purge('tenant');
+        DB::reconnect('tenant');
+
+        /**
+         * Buscar usuário
          */
         $user = TenantUser::where('email', $request->email)->first();
 
@@ -56,7 +67,7 @@ class ApiAuthController extends Controller
         }
 
         /**
-         * Criar token
+         * Criar token Sanctum
          */
         $token = $user->createToken('api-token')->plainTextToken;
 
@@ -69,20 +80,23 @@ class ApiAuthController extends Controller
     }
 
     /**
-     * REGISTRO (tenant já resolvido)
+     * REGISTRO (já dentro do tenant)
      */
     public function register(Request $request)
     {
+        $tenant = app('tenant');
+
         $request->validate([
             'name'     => 'required|string|max:255',
-            'email'    => 'required|email',
+            'email'    => 'required|email|unique:users,email',
             'password' => 'required|min:6|confirmed',
         ]);
 
         $user = TenantUser::create([
-            'name'     => $request->name,
-            'email'    => $request->email,
-            'password' => Hash::make($request->password),
+            'name'      => $request->name,
+            'email'     => $request->email,
+            'password'  => Hash::make($request->password),
+            'tenant_id' => $tenant->id,
         ]);
 
         return response()->json([
